@@ -1,4 +1,4 @@
-/home/benni/clion-2017.1.1/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/benni/P7_Unscented_Kalman_Filter
+/home/benni/Programme/clion-2017.1.1/bin/cmake/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" /home/benni/Repositories/UdacitySDC/P7_Unscented_Kalman_Filter
 -- The C compiler identification is GNU 5.4.0
 -- The CXX compiler identification is GNU 5.4.0
 -- Check for working C compiler: /usr/bin/cc
@@ -15,4 +15,4 @@
 -- Detecting CXX compile features - done
 -- Configuring done
 -- Generating done
--- Build files have been written to: /home/benni/P7_Unscented_Kalman_Filter/cmake-build-debug
+-- Build files have been written to: /home/benni/Repositories/UdacitySDC/P7_Unscented_Kalman_Filter/cmake-build-debug
