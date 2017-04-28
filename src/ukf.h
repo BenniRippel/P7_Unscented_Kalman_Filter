@@ -112,11 +112,11 @@ public:
     void UpdateRadar(MeasurementPackage meas_package);
 
     //-------------------------------------------------------------------
-    void PredictMeanAndCovariance(VectorXd* x_out, MatrixXd* P_out);
-    void AugmentedSigmaPoints(MatrixXd* Xsig_out);
-    void SigmaPointPrediction(MatrixXd* Xsig_out, double* delta_t);
+    void PredictMeanAndCovariance();
+    MatrixXd AugmentedSigmaPoints();
+    void SigmaPointPrediction(MatrixXd &Xsig_aug, const double &delta_t);
     void PredictRadarMeasurement(VectorXd &z_pred, MatrixXd &S, MatrixXd &Zsig);
-    void UpdateState(VectorXd &z, VectorXd &z_pred, MatrixXd &Zsig);
+    void UpdateState(const VectorXd &z, const VectorXd &z_pred, const MatrixXd &Zsig);
 };
 
 #endif /* UKF_H */
