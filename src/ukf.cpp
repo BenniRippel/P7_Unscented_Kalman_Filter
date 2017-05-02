@@ -3,7 +3,6 @@
 #include "Eigen/Dense"
 #include <iostream>
 
-using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 using std::vector;
@@ -14,23 +13,27 @@ using std::vector;
 
 UKF::UKF() {
     // if this is false, laser measurements will be ignored (except during init)
-    use_laser_ = true;
+    use_laser_ = false;
 
     // if this is false, radar measurements will be ignored (except during init)
     use_radar_ = true;
 
     //set state dimension
-    int n_x_ = 5;
+    n_x_ = 5;
     //set augmented dimension
-    int n_aug_ = 7;
+    n_aug_ = 7;
     //define spreading parameter
-    double lambda_ = 3 - n_aug_;
+    lambda_ = 3 - n_aug_;
 
     // initial state vector
     x_ = VectorXd(n_x_);
 
     // initial covariance matrix
-    P_ = MatrixXd(n_x_, n_x_);
+    P_ = MatrixXd::Identity(n_x_, n_x_);
+
+    ///* predicted sigma points matrix
+    Xsig_pred_ = MatrixXd(n_x_, 2*n_aug_+1);
+    Xsig_pred_.fill(0);
 
     // Process noise standard deviation longitudinal acceleration in m/s^2
     std_a_ = 0.3;
@@ -53,20 +56,17 @@ UKF::UKF() {
     // Radar measurement noise standard deviation radius change in m/s
     std_radrd_ = 0.3;
 
-    H_laser_ = MatrixXd(2, 4);
-    H_laser_ << 1, 0, 0, 0, 0, 1, 0, 0 ;
+    H_laser_ = MatrixXd(2, 5);
+    H_laser_ << 1, 0, 0, 0, 0, 0, 1, 0, 0, 0 ;
 
     R_laser_ = MatrixXd(2, 2);
     R_laser_ << std_laspx_*std_laspx_, 0, 0, std_laspy_*std_laspy_;
 
     //set vector for weights_
-    VectorXd weights_ = VectorXd(2*n_aug_+1);
+    weights_ = VectorXd(2*n_aug_+1);
     //init weights_
     weights_.fill(0.5/(lambda_+n_aug_));
     weights_(0)=lambda_/(lambda_+n_aug_);
-
-    // Predicted sigma points
-    MatrixXd Xsig_pred_;
 
     // initialization
     is_initialized_ = false;
@@ -89,10 +89,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     // INITIALISATION WITH FIRST MEASUREMENT
     if (!is_initialized_)
     {
+
         // check for small measurements and adjust
         if (fabs(meas_package.raw_measurements_[0])<0.001 && fabs(meas_package.raw_measurements_[1])<0.001)
         {
-            cout<<"Adjusting Measurement: Setting zeros to 0.1!"<<endl;
+            std::cout<<"Adjusting Measurement: Setting zeros to 0.1!"<<std::endl;
             meas_package.raw_measurements_[0]=0.1;
             meas_package.raw_measurements_[1]=0.1;
         }
@@ -105,6 +106,9 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             x_ << cos(meas_package.raw_measurements_[1])*meas_package.raw_measurements_[0],
                     sin(meas_package.raw_measurements_[1])*meas_package.raw_measurements_[0], 0, 0, 0;
             time_us_=meas_package.timestamp_;
+            // done initializing, no need to predict or update
+            is_initialized_ = true;
+
 
         }
         else if (meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_) {
@@ -113,10 +117,13 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
             */
             x_ << meas_package.raw_measurements_[0], meas_package.raw_measurements_[1], 0, 0, 0;
             time_us_=meas_package.timestamp_;
+            // done initializing, no need to predict or update
+            is_initialized_ = true;
+
         }
 
-        // done initializing, no need to predict or update
-        is_initialized_ = true;
+        std::cout<<"Init!"<<std::endl;
+        std::cout<<"state: "<<x_<<std::endl;
         return;
     }
     // PREDICTION
@@ -125,6 +132,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     // only predict if delta_T is above threshold
     if (delta_T > 0.001)
     {
+        std::cout<<"Prediction Step"<<std::endl;
         UKF::Prediction(delta_T);
     }
 
@@ -132,11 +140,13 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     if (meas_package.sensor_type_ == MeasurementPackage::RADAR && use_radar_)
     {
         // for radar measurement
+        std::cout<<"Radar Update"<<std::endl;
         UKF::UpdateRadar(meas_package);
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::LASER && use_laser_)
     {
         // for laser measurement
+        std::cout<<"Laser Update"<<std::endl;
         UKF::UpdateLidar(meas_package);
     }
 
@@ -159,6 +169,9 @@ void UKF::Prediction(double delta_t) {
     UKF::SigmaPointPrediction(Xsig_aug, delta_t);
     // get mean and covariance
     UKF::PredictMeanAndCovariance();
+
+    std::cout<<"Predicted state: "<<x_<<std::endl;
+    //std::cout<<"Covariance: "<<P_<<std::endl;
 }
 
 /**
@@ -185,6 +198,10 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
     long x_size = x_.size();
     MatrixXd I = MatrixXd::Identity(x_size, x_size);
     P_ = (I - K * H_laser_) * P_;
+
+    std::cout<<"Update Lidar state: "<<x_<<std::endl;
+    //std::cout<<"Covariance: "<<P_<<std::endl;
+
 }
 
 /**
@@ -211,7 +228,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     // Predict RADAR Measurements
     UKF::PredictRadarMeasurement(z_pred, S, Zsig);
     // Update State
-    UKF::UpdateState(z, z_pred, Zsig);
+    UKF::UpdateState(z, z_pred, Zsig, S);
+    std::cout<<"Update Radar state: "<<x_<<std::endl;
+
 }
 
 MatrixXd UKF::AugmentedSigmaPoints() {
@@ -333,7 +352,7 @@ void UKF::PredictRadarMeasurement(VectorXd &z_pred, MatrixXd &S, MatrixXd &Zsig)
     S=S+R_;
 }
 
-void UKF::UpdateState(const VectorXd &z, const VectorXd &z_pred, const MatrixXd &Zsig) {
+void UKF::UpdateState(const VectorXd &z, const VectorXd &z_pred, const MatrixXd &Zsig, const MatrixXd &S) {
     int n_z=3;
     //create matrix for cross correlation Tc
     MatrixXd Tc = MatrixXd(n_x_, n_z);
@@ -355,10 +374,10 @@ void UKF::UpdateState(const VectorXd &z, const VectorXd &z_pred, const MatrixXd 
     }
     //calculate Kalman gain K;
     MatrixXd K = MatrixXd(n_x_, n_z);
-    K = Tc * S_.inverse();
+    K = Tc * S.inverse();
 
     //update state mean and covariance matrix
     x_ = x_ + K*(z - z_pred);
-    P_ = P_ - K*S_*K.transpose();
+    P_ = P_ - (K*S*K.transpose());
 }
 

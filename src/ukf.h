@@ -74,7 +74,7 @@ public:
     ///* the current NIS for laser
     double NIS_laser_;
 
-    Eigen::MatrixXd H_laser_, R_laser_, S_;
+    Eigen::MatrixXd H_laser_, R_laser_;
 
     /**
     * Constructor
@@ -116,7 +116,7 @@ public:
     MatrixXd AugmentedSigmaPoints();
     void SigmaPointPrediction(MatrixXd &Xsig_aug, const double &delta_t);
     void PredictRadarMeasurement(VectorXd &z_pred, MatrixXd &S, MatrixXd &Zsig);
-    void UpdateState(const VectorXd &z, const VectorXd &z_pred, const MatrixXd &Zsig);
+    void UpdateState(const VectorXd &z, const VectorXd &z_pred, const MatrixXd &Zsig, const MatrixXd &S);
 };
 
 #endif /* UKF_H */
