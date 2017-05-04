@@ -74,6 +74,7 @@ public:
     ///* the current NIS for laser
     double NIS_laser_;
 
+    ///* Measurement matrix and measurement covariance matrix for lidar
     Eigen::MatrixXd H_laser_, R_laser_;
 
     /**
@@ -117,6 +118,7 @@ public:
     void SigmaPointPrediction(MatrixXd &Xsig_aug, const double &delta_t);
     void PredictRadarMeasurement(VectorXd &z_pred, MatrixXd &S, MatrixXd &Zsig);
     void UpdateState(const VectorXd &z, const VectorXd &z_pred, const MatrixXd &Zsig, const MatrixXd &S);
+    double AngleNormalization(const double angle);
 };
 
 #endif /* UKF_H */

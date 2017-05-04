@@ -54,12 +54,11 @@ int main(int argc, char* argv[]) {
 
   //check_arguments(argc, argv);
 
-  //string in_file_name_ = "/home/benni/Repositories/UdacitySDC/P7_Unscented_Kalman_Filter/data/obj_pose-laser-radar-synthetic-input.txt";//argv[1];
-  string in_file_name_ = "/home/benni/Repositories/UdacitySDC/P7_Unscented_Kalman_Filter/data/test.txt";//argv[1];
+  string in_file_name_ = argv[1];
 
   ifstream in_file_(in_file_name_.c_str(), ifstream::in);
 
-  string out_file_name_ = "/home/benni/Repositories/UdacitySDC/P7_Unscented_Kalman_Filter/data/output.txt";//argv[2];
+  string out_file_name_ = argv[2];
   ofstream out_file_(out_file_name_.c_str(), ofstream::out);
 
   check_files(in_file_, in_file_name_, out_file_, out_file_name_);
@@ -122,12 +121,16 @@ int main(int argc, char* argv[]) {
       float y_gt;
       float vx_gt;
       float vy_gt;
+      float yaw_gt;
+      float yawrate_gt;
       iss >> x_gt;
       iss >> y_gt;
       iss >> vx_gt;
       iss >> vy_gt;
-      gt_package.gt_values_ = VectorXd(4);
-      gt_package.gt_values_ << x_gt, y_gt, vx_gt, vy_gt;
+      iss >> yaw_gt;
+      iss >> yawrate_gt;
+      gt_package.gt_values_ = VectorXd(6);
+      gt_package.gt_values_ << x_gt, y_gt, vx_gt, vy_gt, yaw_gt, yawrate_gt;
       gt_pack_list.push_back(gt_package);
   }
 
@@ -143,29 +146,39 @@ int main(int argc, char* argv[]) {
 
   size_t number_of_measurements = measurement_pack_list.size();
 
+    /*
   // column names for output file
-  out_file_ << "time_stamp" << "\t";  
+  //out_file_ << "time_stamp" << "\t";
   out_file_ << "px_state" << "\t";
   out_file_ << "py_state" << "\t";
   out_file_ << "v_state" << "\t";
   out_file_ << "yaw_angle_state" << "\t";
   out_file_ << "yaw_rate_state" << "\t";
-  out_file_ << "sensor_type" << "\t";
-  out_file_ << "NIS" << "\t";  
+
   out_file_ << "px_measured" << "\t";
   out_file_ << "py_measured" << "\t";
+
   out_file_ << "px_ground_truth" << "\t";
   out_file_ << "py_ground_truth" << "\t";
+  out_file_ << "v_ground_truth" << "\t";
+  out_file_ << "yaw_ground_truth" << "\t";
+  out_file_ << "yawrate_ground_truth" << "\t";
   out_file_ << "vx_ground_truth" << "\t";
-  out_file_ << "vy_ground_truth" << "\n";
+  out_file_ << "vy_ground_truth" << "\t";
+
+  out_file_ << "NIS_laser" << "\t";
+  out_file_ << "NIS_radar" << "\n";
+*/
 
 
-  for (size_t k = 0; k < number_of_measurements; ++k) {
+
+
+    for (size_t k = 0; k < number_of_measurements; ++k) {
     // Call the UKF-based fusion
     ukf.ProcessMeasurement(measurement_pack_list[k]);
 
     // timestamp
-    out_file_ << measurement_pack_list[k].timestamp_ << "\t"; // pos1 - est
+    //out_file_ << measurement_pack_list[k].timestamp_ << "\t"; // pos1 - est
 
     // output the state vector
     out_file_ << ukf.x_(0) << "\t"; // pos1 - est
@@ -177,10 +190,10 @@ int main(int argc, char* argv[]) {
     // output lidar and radar specific data
     if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER) {
       // sensor type
-      out_file_ << "lidar" << "\t";
+      //out_file_ << "lidar" << "\t";
 
       // NIS value
-      out_file_ << ukf.NIS_laser_ << "\t";
+      //out_file_ << ukf.NIS_laser_ << "\t";
 
       // output the lidar sensor measurement px and py
       out_file_ << measurement_pack_list[k].raw_measurements_(0) << "\t";
@@ -188,10 +201,10 @@ int main(int argc, char* argv[]) {
 
     } else if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::RADAR) {
       // sensor type
-      out_file_ << "radar" << "\t";
+      //out_file_ << "radar" << "\t";
 
       // NIS value
-      out_file_ << ukf.NIS_radar_ << "\t";
+      //out_file_ << ukf.NIS_radar_ << "\t";
 
       // output radar measurement in cartesian coordinates
       float ro = measurement_pack_list[k].raw_measurements_(0);
@@ -203,11 +216,28 @@ int main(int argc, char* argv[]) {
     // output the ground truth
     out_file_ << gt_pack_list[k].gt_values_(0) << "\t";
     out_file_ << gt_pack_list[k].gt_values_(1) << "\t";
-    out_file_ << gt_pack_list[k].gt_values_(2) << "\t";
-    out_file_ << gt_pack_list[k].gt_values_(3) << "\n";
+    out_file_ << sqrt((gt_pack_list[k].gt_values_(2)*gt_pack_list[k].gt_values_(2) + gt_pack_list[k].gt_values_(3)*gt_pack_list[k].gt_values_(3))) << "\t"; // v =sqrt( vx*vx+vy*vy)
+    out_file_ << gt_pack_list[k].gt_values_(4) << "\t"; // yaw
+    out_file_ << gt_pack_list[k].gt_values_(5) << "\t"; // yawrate
+    out_file_ << gt_pack_list[k].gt_values_(2) << "\t"; // vx
+    out_file_ << gt_pack_list[k].gt_values_(3) << "\t"; //vy
 
-    // convert ukf x vector to cartesian to compare to ground truth
+
+    // output NIS
+    if (measurement_pack_list[k].sensor_type_ == MeasurementPackage::LASER){
+        out_file_ << ukf.NIS_laser_ << "\t";
+        out_file_ << 0.0 << "\t";
+        out_file_ << "laser" << "\n";
+    }
+    else {
+        out_file_ << 0.0 << "\t";
+        out_file_ << ukf.NIS_radar_ << "\t";
+        out_file_ << "radar" << "\n";
+    }
+
+        // convert ukf x vector to cartesian to compare to ground truth
     VectorXd ukf_x_cartesian_ = VectorXd(4);
+    VectorXd gt_x_cartesian_ = VectorXd(4);
 
     float x_estimate_ = ukf.x_(0);
     float y_estimate_ = ukf.x_(1);
@@ -215,9 +245,10 @@ int main(int argc, char* argv[]) {
     float vy_estimate_ = ukf.x_(2) * sin(ukf.x_(3));
     
     ukf_x_cartesian_ << x_estimate_, y_estimate_, vx_estimate_, vy_estimate_;
+    gt_x_cartesian_ << gt_pack_list[k].gt_values_(0), gt_pack_list[k].gt_values_(1), gt_pack_list[k].gt_values_(2), gt_pack_list[k].gt_values_(3);
     
     estimations.push_back(ukf_x_cartesian_);
-    ground_truth.push_back(gt_pack_list[k].gt_values_);
+    ground_truth.push_back(gt_x_cartesian_);
 
   }
 

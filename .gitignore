@@ -4,4 +4,6 @@
 # build files
 build/
 .idea/
+.ipynb_checkpoints/
+
 

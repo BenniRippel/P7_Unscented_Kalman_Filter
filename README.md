@@ -1,46 +1,45 @@
-# Unscented Kalman Filter Project Starter Code
+# Unscented Kalman Filter Project 
 Self-Driving Car Engineer Nanodegree Program
 
----
+In this project, I built an Unscented Kalman Filter in c++ to fuse sensor data from 2 sources:
 
-## Dependencies
+- LIDAR Sensor
+- RADAR Sensor
 
-* cmake >= v3.5
-* make >= v4.1
-* gcc/g++ >= v5.4
+A constant turn rate and velocity magnitude (CTRV) model  is used to predict the states.
 
-## Basic Build Instructions
+There are sample data files in the /data folder.
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./UnscentedKF path/to/input.txt path/to/output.txt`. You can find
-   some sample inputs in 'data/'.
-    - eg. `./UnscentedKF ../data/obj_pose-laser-radar-synthetic-input.txt`
+Run the UKF in a terminal entering:
 
-## Editor Settings
+./UnscentedKF /input/data/file /output/data/file
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+The following plots were made using the jupyter notebook ukf-visualisation-extended.ipynb (Taken from [here]( https://github.com/udacity/CarND-Mercedes-SF-Utilities ) and adjusted to my needs).
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+The process noise parameters std_a_ and std_yawdd_ were tuned using Normalized Innovation Squared (NIS) Values
+![NIS_laser](./NIS_laser.png)
+![NIS_radar](./NIS_radar.png)
 
-## Code Style
+The results are reasonable. See the RMSE Values in the table below.
+ 
+Value   |                  RMSE      
+----------------|-----------------------------------|                  
+x  |      0.07 m        
+y  |      0.08 m
+vx |      0.34 m/s
+vy |      0.23 m/s
 
-Please stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html) as much as possible.
+The plots comparing ground truth and UKF estimations support the low RMSE values.
 
-## Generating Additional Data
+X vs Y Position:
+![px_vs_py](./px_vs_py.png)
 
-This is optional!
+Absolute velocity vs time:
+![vabs_vs_t](./v_abs_vs_t.png)
 
-If you'd like to generate your own radar and lidar data, see the
-[utilities repo](https://github.com/udacity/CarND-Mercedes-SF-Utilities) for
-Matlab scripts that can generate additional data.
+Yaw angle vs time:
+![yaw_vs_t](./yaw_vs_t.png)
 
-## Project Instructions and Rubric
+Yaw rate vs time:
+![yawrate_vs_t](./yawrate_vs_t.png)
 
-This information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/0949fca6-b379-42af-a919-ee50aa304e6a/lessons/c3eb3583-17b2-4d83-abf7-d852ae1b9fff/concepts/f437b8b0-f2d8-43b0-9662-72ac4e4029c1)
-for instructions and the project rubric.
